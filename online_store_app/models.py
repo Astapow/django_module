@@ -3,7 +3,7 @@ from django.db import models
 
 
 class User(AbstractUser):
-    wallet = models.DecimalField(decimal_places=2, max_digits=20)
+    wallet = models.DecimalField(decimal_places=2, max_digits=20, default=10.000)
 
 
 class Product(models.Model):
