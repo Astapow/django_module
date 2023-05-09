@@ -1,7 +1,9 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import LogoutView, LoginView
 from django.core.exceptions import ImproperlyConfigured
+from django.db import transaction
 from django.db.models import QuerySet
+from django.shortcuts import get_object_or_404
 from django.views.generic import CreateView, UpdateView, ListView, DetailView
 
 from online_store_app.forms import UserForm, ProductForm, PurchaseForm
@@ -43,12 +45,18 @@ class ProductBuyCreate(CreateView):
     form_class = PurchaseForm
     success_url = '/'
 
-
     def form_valid(self, form):
         obj = form.save(commit=False)
+        product = get_object_or_404(Product, pk=self.kwargs['pk'])
+        obj.product = product
         obj.user = self.request.user
-        obj.product = Product.objects.get(pk=self.kwargs.get(self.pk_url_kwarg))
-        obj.save()
+        product.stock_availability -= form.cleaned_data['amount']
+        cost = form.cleaned_data['amount'] * product.price
+        self.request.user.wallet -= cost
+        with transaction.atomic():
+            obj.save()
+            product.save()
+            self.request.user.save()
         return super().form_valid(form=form)
 
 
