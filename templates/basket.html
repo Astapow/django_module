@@ -1,0 +1,16 @@
+{% extends 'home_page.html' %}
+
+{% block content %}
+    <h1>Your basket:</h1>
+    <br>
+
+    {% for purchase in purchase_list %}
+
+        <form class="form-control form-control-lg" method="post">{% csrf_token %}
+            {{ purchase.product.name }} >>> Bought: {{ purchase.amount }}
+            <a class="btn btn-danger" href="{% url 'home' %}">Return</a>
+
+        </form>
+
+    {% endfor %}
+{% endblock %}

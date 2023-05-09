@@ -1,0 +1,15 @@
+{% extends 'home_page.html' %}
+
+{% block content %}
+    <h1>Returns:</h1>
+    <br>
+    {% for return in return_list %}
+        <form class="form-control form-control-lg" method="post">{% csrf_token %}
+            {{ return.purchase.product.name }} >>> User: {{ return.purchase.user }} >>>
+            Amount: {{ return.purchase.amount }}
+            <a class="btn btn-danger" href="{% url 'home' %}">Accept</a>
+            <a class="btn btn-danger" href="{% url 'home' %}">Reject</a>
+
+        </form>
+    {% endfor %}
+{% endblock %}
