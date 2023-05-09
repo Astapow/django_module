@@ -35,8 +35,6 @@ class PurchaseForm(ModelForm):
         model = Purchase
         fields = ['amount']
 
-    def clean_amount(self):
-        pass
 
 
 class ReturnForm(ModelForm):
