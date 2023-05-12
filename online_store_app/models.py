@@ -24,6 +24,9 @@ class Purchase(models.Model):
     amount = models.PositiveIntegerField()
     buy_at = models.DateTimeField(auto_now=True)
 
+    def __str__(self):
+        return self.product.name
+
 
 class Return(models.Model):
     purchase = models.OneToOneField(Purchase, on_delete=models.CASCADE)

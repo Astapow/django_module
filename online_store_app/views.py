@@ -1,11 +1,17 @@
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.views import LogoutView, LoginView
-from django.core.exceptions import ImproperlyConfigured
-from django.db.models import QuerySet
-from django.views.generic import CreateView, UpdateView, ListView, DetailView
+from django.db import transaction
+from django.shortcuts import redirect
+from django.views.generic import CreateView, UpdateView, ListView, DetailView, DeleteView
 
-from online_store_app.forms import UserForm, ProductForm, PurchaseForm
+from online_store_app.forms import UserForm, ProductForm, PurchaseForm, ReturnForm
 from online_store_app.models import Product, Purchase, Return
+
+
+class AdminPassedMixin(UserPassesTestMixin):
+    def test_func(self):
+        return self.request.user.is_superuser
 
 
 class BaseView(ListView):
@@ -15,7 +21,7 @@ class BaseView(ListView):
     queryset = Product.objects.all()
 
 
-class ProductUpdateView(LoginRequiredMixin, UpdateView):
+class ProductUpdateView(AdminPassedMixin, UpdateView):
     model = Product
     fields = ['name', 'description', 'price', 'stock_availability']
     template_name = 'update_product.html'
@@ -24,7 +30,7 @@ class ProductUpdateView(LoginRequiredMixin, UpdateView):
     login_url = 'login.html'
 
 
-class ProductCreateView(LoginRequiredMixin, CreateView):
+class ProductCreateView(AdminPassedMixin, CreateView):
     form_class = ProductForm
     template_name = 'create_product.html'
     success_url = '/'
@@ -38,18 +44,36 @@ class ProductDetailView(LoginRequiredMixin, DetailView):
     login_url = 'login.html'
 
 
-class ProductBuyCreate(CreateView):
-    http_method_names = ['post']
+class PurchaseCreateView(LoginRequiredMixin, CreateView):
+    model = Purchase
     form_class = PurchaseForm
     success_url = '/'
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update(
+            {"product_id": self.kwargs['product_id'], "request": self.request}
+        )
+        return kwargs
 
     def form_valid(self, form):
         obj = form.save(commit=False)
+        amount = form.cleaned_data['amount']
+        product = form.product
+        obj.product = product
         obj.user = self.request.user
-        obj.product = Product.objects.get(pk=self.kwargs.get(self.pk_url_kwarg))
-        obj.save()
+        product.stock_availability -= amount
+        cost = amount * product.price
+        obj.user.wallet -= cost
+        with transaction.atomic():
+            obj.save()
+            product.save()
+            obj.user.save()
+        messages.success(self.request, 'Purchase completed successfully!')
         return super().form_valid(form=form)
+
+    def form_invalid(self, form):
+        return redirect('/')
 
 
 class BasketDetailView(LoginRequiredMixin, ListView):
@@ -57,17 +81,60 @@ class BasketDetailView(LoginRequiredMixin, ListView):
     template_name = 'basket.html'
     queryset = Purchase.objects.all()
     login_url = 'login.html'
+    extra_context = {'form': ReturnForm()}
 
     def get_queryset(self):
         queryset = super().get_queryset()
         return queryset.filter(user=self.request.user)
 
 
-class SuperUserReturns(LoginRequiredMixin, ListView):
+class ObjReturnCreateView(LoginRequiredMixin, CreateView):
+    model = Return
+    form_class = ReturnForm
+    success_url = '/'
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update(
+            {"request": self.request, "purchase_id": self.kwargs['purchase_id']}
+        )
+        return kwargs
+
+    def form_valid(self, form):
+        purchase_id = int(self.request.POST.get('purchase_id'))
+        obj_purchase = Purchase.objects.get(pk=purchase_id)
+        obj_returns = Return(purchase=obj_purchase)
+        obj_returns.save()
+        messages.success(self.request, 'Return is done!!!, wait for admin confirmation')
+        return redirect('/')
+
+    def form_invalid(self, form):
+        return redirect('/')
+
+
+class SuperUserReturns(AdminPassedMixin, ListView):
     model = Return
     template_name = 'admin_returns.html'
     queryset = Return.objects.all()
     login_url = 'login.html'
+
+
+class AcceptReturnDeleteView(AdminPassedMixin, DeleteView):
+    model = Purchase
+    success_url = '/'
+
+    def form_valid(self, form):
+        self.object.product.stock_availability += self.object.amount
+        self.object.user.wallet += self.object.amount * self.object.product.price
+        with transaction.atomic():
+            self.object.product.save()
+            self.object.user.save()
+        return super().form_valid(form=form)
+
+
+class RejectReturnDeleteView(AdminPassedMixin, DeleteView):
+    model = Return
+    success_url = '/'
 
 
 class Login(LoginView):

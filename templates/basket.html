@@ -8,8 +8,14 @@
 
         <form class="form-control form-control-lg" method="post">{% csrf_token %}
             {{ purchase.product.name }} >>> Bought: {{ purchase.amount }}
-            <a class="btn btn-danger" href="{% url 'home' %}">Return</a>
 
+
+        </form>
+        <form name="return-form" method="post" action="{% url 'create_return' purchase.id %}">
+            {% csrf_token %}
+
+            <input type="hidden" name="purchase_id" value="{{ purchase.id }}">
+            <button class="btn btn-danger" type="submit">Return</button>
         </form>
 
     {% endfor %}

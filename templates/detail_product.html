@@ -1,6 +1,7 @@
 {% extends 'home_page.html' %}
 
 {% block content %}
+
     <br>
     <div style="display: flex;"
         <div class="card mb-3" style="max-width: 540px;">
@@ -20,11 +21,13 @@
                                 Edit</a>
                         {% endif %}
 
-                        <form method="post" action="{% url 'buy_product' object.id %}">
+                            {% if user.is_authenticated and user.is_superuser == False %}
+                        <form method="post" action="{% url 'buy_product' product.pk %}">
                             {% csrf_token %}
                             {{ form }}
                             <input type="submit" value="Buy">
                         </form>
+                            {% endif %}
                     </div>
                 </div>
             </div>
