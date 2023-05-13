@@ -27,21 +27,21 @@ class ProductUpdateView(AdminPassedMixin, UpdateView):
     template_name = 'update_product.html'
     queryset = Product.objects.all()
     success_url = '/'
-    login_url = 'login.html'
+    login_url = 'login/'
 
 
 class ProductCreateView(AdminPassedMixin, CreateView):
     form_class = ProductForm
     template_name = 'create_product.html'
     success_url = '/'
-    login_url = 'login.html'
+    login_url = 'login/'
 
 
 class ProductDetailView(LoginRequiredMixin, DetailView):
     model = Product
     template_name = 'detail_product.html'
     extra_context = {'form': PurchaseForm()}
-    login_url = 'login.html'
+    login_url = 'login/'
 
 
 class PurchaseCreateView(LoginRequiredMixin, CreateView):
@@ -80,7 +80,7 @@ class BasketDetailView(LoginRequiredMixin, ListView):
     model = Purchase
     template_name = 'basket.html'
     queryset = Purchase.objects.all()
-    login_url = 'login.html'
+    login_url = 'login/'
     extra_context = {'form': ReturnForm()}
 
     def get_queryset(self):
@@ -101,8 +101,7 @@ class ObjReturnCreateView(LoginRequiredMixin, CreateView):
         return kwargs
 
     def form_valid(self, form):
-        purchase_id = int(self.request.POST.get('purchase_id'))
-        obj_purchase = Purchase.objects.get(pk=purchase_id)
+        obj_purchase = form.purchase
         obj_returns = Return(purchase=obj_purchase)
         obj_returns.save()
         messages.success(self.request, 'Return is done!!!, wait for admin confirmation')
@@ -116,7 +115,7 @@ class SuperUserReturns(AdminPassedMixin, ListView):
     model = Return
     template_name = 'admin_returns.html'
     queryset = Return.objects.all()
-    login_url = 'login.html'
+    login_url = 'login/'
 
 
 class AcceptReturnDeleteView(AdminPassedMixin, DeleteView):
@@ -129,7 +128,7 @@ class AcceptReturnDeleteView(AdminPassedMixin, DeleteView):
         with transaction.atomic():
             self.object.product.save()
             self.object.user.save()
-        return super().form_valid(form=form)
+            return super().form_valid(form=form)
 
 
 class RejectReturnDeleteView(AdminPassedMixin, DeleteView):
