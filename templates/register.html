@@ -1,0 +1,15 @@
+{% extends 'home_page.html' %}
+
+{% block content %}
+    <br>
+    <span>Already has account? <a href="{% url 'login' %}">Log in</a></span>
+
+    <form class="form-control form-control-lg" method="post">{% csrf_token %}
+
+        {{ form.as_p }}
+
+        <input type="hidden" name="next" value="/">
+        <input type="submit" value="Register">
+
+    </form>
+{% endblock %}

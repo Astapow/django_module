@@ -1,0 +1,36 @@
+{% extends 'home_page.html' %}
+
+{% block content %}
+
+    <br>
+    <div style="display: flex;"
+        <div class="card mb-3" style="max-width: 540px;">
+            <div class="row g-0">
+                <div class="col-md-4">
+                    <img src="{{ product.img.url }}" class="img-fluid rounded-start" alt="img">
+                </div>
+                <div class="col-md-8">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ product.name }}</h5>
+                        <p class="card-text">{{ product.description }}</p>
+
+                        <a class="btn bg-gray-dark center">{{ product.price }} ₴</a>
+                        <a class="btn  center">left: {{ product.stock_availability }}</a>
+                        {% if request.user.is_superuser == True %}
+                            <a class="btn btn-danger" href="{% url 'update' product.id %}?product={{ product.id }}">
+                                Edit</a>
+                        {% endif %}
+
+                            {% if user.is_authenticated and user.is_superuser == False %}
+                        <form method="post" action="{% url 'buy_product' product.pk %}">
+                            {% csrf_token %}
+                            {{ form }}
+                            <input type="submit" value="Buy">
+                        </form>
+                            {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+{% endblock %}

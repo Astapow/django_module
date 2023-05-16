@@ -1,0 +1,22 @@
+{% extends 'home_page.html' %}
+
+{% block content %}
+    <h1>Your basket:</h1>
+    <br>
+
+    {% for purchase in purchase_list %}
+
+        <form class="form-control form-control-lg" method="post">{% csrf_token %}
+            {{ purchase.product.name }} >>> Bought: {{ purchase.amount }}
+
+
+        </form>
+        <form name="return-form" method="post" action="{% url 'create_return' purchase.id %}">
+            {% csrf_token %}
+
+            <input type="hidden" name="purchase_id" value="{{ purchase.id }}">
+            <button class="btn btn-danger" type="submit">Return</button>
+        </form>
+
+    {% endfor %}
+{% endblock %}

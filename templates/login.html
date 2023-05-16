@@ -1,0 +1,14 @@
+{% extends 'home_page.html' %}
+
+{% block content %}
+    <br>
+    <span>Wanna register? <a href="{% url 'register' %}">Sign Up</a></span>
+
+    <form class="form-control form-control-lg"  method="post">{% csrf_token %}
+
+        {{ form }}
+
+        <input type="hidden" name="next" value="/">
+        <input type="submit" value="Login">
+    </form>
+{% endblock %}

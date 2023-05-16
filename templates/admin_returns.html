@@ -1,0 +1,26 @@
+{% extends 'home_page.html' %}
+
+{% block content %}
+    <h1>Returns:</h1>
+    <br>
+    {% for return in return_list %}
+        <div class="form-control form-control-lg">
+            {{ return.purchase.product.name }} >>> User: {{ return.purchase.user }} >>>
+            Amount: {{ return.purchase.amount }}
+
+            <form  name="return-form" method="post" action="{% url 'accept_return' return.purchase.id %}">
+            {% csrf_token %}
+
+            <input type="hidden" name="accept" value="{{ return.id }}">
+            <button class="btn btn-danger" type="submit">Accept</button>
+        </form>
+            <br>
+        <form name="return-form" method="post" action="{% url 'reject_return' return.pk %}">
+            {% csrf_token %}
+
+            <input type="hidden" name="reject" value="{{ return.id }}">
+            <button class="btn btn-danger" type="submit">Reject</button>
+        </form>
+        </div>
+    {% endfor %}
+{% endblock %}
